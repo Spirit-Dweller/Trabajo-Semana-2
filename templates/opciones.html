@@ -178,15 +178,15 @@
 <body>
 
 <div class="card">
-    <h1>📦 Acceso rápido</h1>
+    <h1>Acceso rápido</h1>
     <div class="subtitulo">¿Qué deseas hacer?</div>
 
     <div class="botones-container">
         <button id="btnIngresarProducto" class="btn btn-producto">
-            ✨ Ingresar Producto
+            Ingresar Producto
         </button>
         <button id="btnHacerLogin" class="btn btn-login">
-            🔐 Hacer Login
+            Hacer Login
         </button>
     </div>
 
@@ -200,10 +200,9 @@
     </div>
 
     <button id="resetMensajeBtn" class="reset-btn">
-        🔄 Limpiar elección
+        Limpiar elección
     </button>
 </div>
-
 <script>
     const btnProducto = document.getElementById('btnIngresarProducto');
     const btnLogin = document.getElementById('btnHacerLogin');
@@ -221,7 +220,7 @@
                     <span class="icono-respuesta">📦➕</span>
                     <span class="texto-respuesta">
                         <strong>Has seleccionado: Ingresar Producto</strong><br>
-                        ${mensajePersonalizado || 'Procesando solicitud...'}
+                        ${mensajePersonalizado || 'Verificando permisos...'}
                     </span>
                 </div>
             `;
@@ -232,7 +231,7 @@
                     <span class="icono-respuesta">🔑👤</span>
                     <span class="texto-respuesta">
                         <strong>Has seleccionado: Hacer Login</strong><br>
-                        ${mensajePersonalizado || 'Procesando solicitud...'}
+                        ${mensajePersonalizado || 'Preparando inicio de sesión...'}
                     </span>
                 </div>
             `;
@@ -281,20 +280,25 @@
             if (data.status === 'success') {
                 mostrarMensaje(opcion, data.mensaje);
                 
-                // Si hay redirección, esperar un momento y redirigir
+                // Redirigir después de 1 segundo
                 if (data.redirect) {
                     setTimeout(() => {
                         window.location.href = data.redirect;
-                    }, 1500);
+                    }, 1000);
                 }
             } else {
                 mostrarMensaje(opcion, `❌ Error: ${data.mensaje}`);
+                // Restaurar botón después de error
+                setTimeout(() => {
+                    restaurarBoton(boton, textoOriginal);
+                }, 2000);
             }
         } catch (error) {
             console.error('Error:', error);
-            mostrarMensaje(opcion, '❌ Error de conexión con el servidor');
-        } finally {
-            restaurarBoton(boton, textoOriginal);
+            mostrarMensaje(opcion, '❌ Error de conexión con el servidor. ¿El servidor está corriendo?');
+            setTimeout(() => {
+                restaurarBoton(boton, textoOriginal);
+            }, 2000);
         }
     }
 
@@ -309,6 +313,6 @@
     resetBtn.addEventListener('click', () => {
         mostrarMensaje('reset');
     });
-</script>
+</script>  
 </body>
 </html>
