@@ -437,146 +437,75 @@
         }
         
         // CRUD Inventarios - COMPLETO (con todos los campos)
-        function crearInventario() {
-            const codigo = $('#nuevo_codigo').val().trim();
-            const producto = $('#nuevo_producto').val().trim();
-            const cantidad = $('#nuevo_cantidad').val();
-            const precio = $('#nuevo_precio').val();
-            
-            if (!codigo) {
-                alert('❌ El código del producto es requerido');
-                return;
-            }
-            if (!producto) {
-                alert('❌ El nombre del producto es requerido');
-                return;
-            }
-            if (!cantidad || cantidad < 0) {
-                alert('❌ Ingrese una cantidad válida');
-                return;
-            }
-            if (!precio || precio < 0) {
-                alert('❌ Ingrese un precio válido');
-                return;
-            }
-            
-            const data = {
-                codigo: codigo,
-                producto: producto,
-                descripcion: $('#nuevo_descripcion').val().trim() || '',
-                cantidad: parseInt(cantidad),
-                precio: parseFloat(precio),
-                categoria: $('#nuevo_categoria').val() || '',
-                ubicacion: $('#nuevo_ubicacion').val().trim() || '',
-                stock_minimo: parseInt($('#nuevo_stock_minimo').val()) || 5,
-                proveedor: $('#nuevo_proveedor').val().trim() || ''
-            };
-            
-            console.log('📤 Enviando producto:', data);
-            
-            fetch('/api/inventarios', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw err });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    alert('❌ Error: ' + data.error);
-                } else {
-                    if (data.existente) {
-                        alert(`✅ Producto actualizado! Se sumó +${cantidad} unidades.\n📦 Nuevo stock total: ${data.nueva_cantidad}`);
-                    } else {
-                        alert('✅ Producto nuevo agregado exitosamente');
-                    }
-                    $('#crearInventarioForm')[0].reset();
-                    bootstrap.Modal.getInstance(document.getElementById('crearInventarioModal')).hide();
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Error:', error);
-                alert('❌ Error al agregar producto: ' + (error.error || error.message || 'Error desconocido'));
-            });
+function crearInventario() {
+    const codigo = $('#nuevo_codigo').val().trim();
+    const producto = $('#nuevo_producto').val().trim();
+    const cantidad = $('#nuevo_cantidad').val();
+    const precio = $('#nuevo_precio').val();
+    
+    if (!codigo) {
+        alert('❌ El código del producto es requerido');
+        return;
+    }
+    if (!producto) {
+        alert('❌ El nombre del producto es requerido');
+        return;
+    }
+    if (!cantidad || cantidad < 0) {
+        alert('❌ Ingrese una cantidad válida');
+        return;
+    }
+    if (!precio || precio < 0) {
+        alert('❌ Ingrese un precio válido');
+        return;
+    }
+    
+    const data = {
+        codigo: codigo,
+        producto: producto,
+        descripcion: $('#nuevo_descripcion').val().trim() || '',
+        cantidad: parseInt(cantidad),
+        precio: parseFloat(precio),
+        categoria: $('#nuevo_categoria').val() || '',
+        ubicacion: $('#nuevo_ubicacion').val().trim() || '',
+        stock_minimo: parseInt($('#nuevo_stock_minimo').val()) || 5,
+        proveedor: $('#nuevo_proveedor').val().trim() || ''
+    };
+    
+    console.log('📤 Enviando producto:', data);
+    
+    fetch('/api/inventarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw err });
         }
-        
-        function editarInventario(id) {
-            fetch(`/api/inventarios/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                $('#edit_id').val(data.id);
-                $('#edit_codigo').val(data.codigo);
-                $('#edit_producto').val(data.producto);
-                $('#edit_descripcion').val(data.descripcion || '');
-                $('#edit_cantidad').val(data.cantidad);
-                $('#edit_precio').val(data.precio);
-                $('#edit_categoria').val(data.categoria || '');
-                $('#edit_ubicacion').val(data.ubicacion || '');
-                $('#edit_stock_minimo').val(data.stock_minimo || 5);
-                $('#edit_proveedor').val(data.proveedor || '');
-                
-                new bootstrap.Modal(document.getElementById('editarInventarioModal')).show();
-            })
-            .catch(error => alert('❌ Error al cargar datos: ' + error));
-        }
-        
-        function actualizarInventario() {
-            const id = $('#edit_id').val();
-            const data = {
-                codigo: $('#edit_codigo').val(),
-                producto: $('#edit_producto').val(),
-                descripcion: $('#edit_descripcion').val(),
-                cantidad: parseInt($('#edit_cantidad').val()),
-                precio: parseFloat($('#edit_precio').val()),
-                categoria: $('#edit_categoria').val(),
-                ubicacion: $('#edit_ubicacion').val(),
-                stock_minimo: parseInt($('#edit_stock_minimo').val()),
-                proveedor: $('#edit_proveedor').val()
-            };
-            
-            fetch(`/api/inventarios/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) alert('❌ Error: ' + data.error);
-                else {
-                    alert('✅ Producto actualizado');
-                    location.reload();
-                }
-            })
-            .catch(error => alert('❌ Error: ' + error));
-        }
-        
-        function eliminarInventario(id) {
-            if (confirm('¿Estás seguro de eliminar este producto?')) {
-                fetch(`/api/inventarios/${id}`, { method: 'DELETE' })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.error) alert('❌ Error: ' + data.error);
-                    else {
-                        alert('✅ Producto eliminado');
-                        location.reload();
-                    }
-                });
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            alert('❌ Error: ' + data.error);
+        } else {
+            if (data.existente) {
+                // Producto existente - se sumó cantidad
+                alert(`✅ PRODUCTO ACTUALIZADO\n\n📦 Producto: ${producto}\n🔢 Código: ${codigo}\n\n📊 Resumen:\n• Cantidad anterior: ${data.cantidad_anterior}\n• Cantidad agregada: +${data.cantidad_agregada}\n• Stock total: ${data.nueva_cantidad}`);
+            } else {
+                // Producto nuevo
+                alert(`✅ PRODUCTO NUEVO AGREGADO\n\n📦 Producto: ${producto}\n🔢 Código: ${codigo}\n📊 Stock inicial: ${data.nueva_cantidad}`);
             }
-        }
-        
-        // Limpiar modales al cerrar
-        $('#crearInventarioModal').on('hidden.bs.modal', function() {
             $('#crearInventarioForm')[0].reset();
-        });
-        
-        $('#editarInventarioModal').on('hidden.bs.modal', function() {
-            $('#editarInventarioForm')[0].reset();
-        });
+            bootstrap.Modal.getInstance(document.getElementById('crearInventarioModal')).hide();
+            location.reload();
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error al agregar producto: ' + (error.error || error.message || 'Error desconocido'));
+    });
+}
     </script>
 </body>
 </html>

@@ -299,27 +299,66 @@ def crear_inventario():
         return jsonify({'error': 'No autorizado'}), 403
     
     data = request.json
+    codigo = data.get('codigo')
     
-    # Verificar si el código ya existe
-    if Inventario.query.filter_by(codigo=data.get('codigo')).first():
-        return jsonify({'error': 'El código ya existe'}), 400
+    # Buscar si el producto ya existe por código
+    producto_existente = Inventario.query.filter_by(codigo=codigo).first()
     
-    nuevo_producto = Inventario(
-        codigo=data.get('codigo'),
-        producto=data.get('producto'),
-        descripcion=data.get('descripcion', ''),
-        cantidad=int(data.get('cantidad', 0)),
-        precio=float(data.get('precio', 0)),
-        categoria=data.get('categoria', ''),
-        ubicacion=data.get('ubicacion', ''),
-        stock_minimo=int(data.get('stock_minimo', 5)),
-        proveedor=data.get('proveedor', '')
-    )
-    
-    db.session.add(nuevo_producto)
-    db.session.commit()
-    
-    return jsonify({'message': 'Producto creado exitosamente', 'id': nuevo_producto.id}), 201
+    if producto_existente:
+        # Si existe, sumamos la cantidad nueva
+        cantidad_nueva = int(data.get('cantidad', 0))
+        cantidad_anterior = producto_existente.cantidad
+        producto_existente.cantidad += cantidad_nueva
+        
+        # Opcional: Actualizar otros campos si están presentes en la solicitud
+        if data.get('producto'):
+            producto_existente.producto = data.get('producto')
+        if data.get('descripcion'):
+            producto_existente.descripcion = data.get('descripcion')
+        if data.get('precio'):
+            producto_existente.precio = float(data.get('precio'))
+        if data.get('categoria'):
+            producto_existente.categoria = data.get('categoria')
+        if data.get('ubicacion'):
+            producto_existente.ubicacion = data.get('ubicacion')
+        if data.get('stock_minimo'):
+            producto_existente.stock_minimo = int(data.get('stock_minimo'))
+        if data.get('proveedor'):
+            producto_existente.proveedor = data.get('proveedor')
+        
+        db.session.commit()
+        
+        return jsonify({
+            'message': f'Producto existente. Cantidad actualizada',
+            'id': producto_existente.id,
+            'existente': True,
+            'cantidad_anterior': cantidad_anterior,
+            'cantidad_agregada': cantidad_nueva,
+            'nueva_cantidad': producto_existente.cantidad
+        }), 200
+    else:
+        # Si no existe, crear nuevo producto
+        nuevo_producto = Inventario(
+            codigo=codigo,
+            producto=data.get('producto'),
+            descripcion=data.get('descripcion', ''),
+            cantidad=int(data.get('cantidad', 0)),
+            precio=float(data.get('precio', 0)),
+            categoria=data.get('categoria', ''),
+            ubicacion=data.get('ubicacion', ''),
+            stock_minimo=int(data.get('stock_minimo', 5)),
+            proveedor=data.get('proveedor', '')
+        )
+        
+        db.session.add(nuevo_producto)
+        db.session.commit()
+        
+        return jsonify({
+            'message': 'Producto nuevo creado exitosamente', 
+            'id': nuevo_producto.id,
+            'existente': False,
+            'nueva_cantidad': nuevo_producto.cantidad
+        }), 201
 
 @app.route('/api/inventarios/<int:id>', methods=['PUT'])
 @login_required
