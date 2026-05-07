@@ -1,0 +1,81 @@
+<!-- templates/tienda.html -->
+{% extends "base.html" %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-md-8">
+            <h2>🏪 Tienda de Productos</h2>
+            <p>Bienvenido {{ current_user.username }} | Saldo disponible: ${{ "%.2f"|format(current_user.saldo) }}</p>
+        </div>
+        <div class="col-md-4 text-end">
+            <a href="/carrito" class="btn btn-primary">
+                🛒 Carrito (<span id="cart-count">0</span>)
+            </a>
+        </div>
+    </div>
+
+    <div class="row mt-4" id="productos-container">
+        {% for producto in productos %}
+        <div class="col-md-4 mb-4">
+            <div class="card h-100">
+                <img src="{{ producto.imagen_url or 'https://via.placeholder.com/200' }}" 
+                     class="card-img-top" alt="{{ producto.nombre }}">
+                <div class="card-body">
+                    <h5 class="card-title">{{ producto.nombre }}</h5>
+                    <p class="card-text">{{ producto.descripcion[:100] }}</p>
+                    <p class="card-text">
+                        <strong>Precio: ${{ "%.2f"|format(producto.precio) }}</strong><br>
+                        <small>Disponibles: {{ producto.cantidad }} unidades</small>
+                    </p>
+                    <input type="number" id="cantidad-{{ producto.id }}" 
+                           class="form-control mb-2" value="1" min="1" max="{{ producto.cantidad }}">
+                    <button class="btn btn-success w-100" 
+                            onclick="agregarAlCarrito({{ producto.id }}, '{{ producto.nombre }}', {{ producto.precio }})">
+                        Agregar al Carrito
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+let carrito = [];
+
+function agregarAlCarrito(id, nombre, precio) {
+    const cantidad = document.getElementById(`cantidad-${id}`).value;
+    const item = { id, nombre, precio, cantidad: parseInt(cantidad) };
+    
+    const existing = carrito.find(i => i.id === id);
+    if (existing) {
+        existing.cantidad += parseInt(cantidad);
+    } else {
+        carrito.push(item);
+    }
+    
+    actualizarCarritoUI();
+    guardarCarrito();
+}
+
+function actualizarCarritoUI() {
+    const count = carrito.reduce((sum, item) => sum + item.cantidad, 0);
+    document.getElementById('cart-count').innerText = count;
+}
+
+function guardarCarrito() {
+    localStorage.setItem('carrito', JSON.stringify(carrito));
+}
+
+function cargarCarrito() {
+    const saved = localStorage.getItem('carrito');
+    if (saved) {
+        carrito = JSON.parse(saved);
+        actualizarCarritoUI();
+    }
+}
+
+cargarCarrito();
+</script>
+{% endblock %}

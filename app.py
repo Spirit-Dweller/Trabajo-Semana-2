@@ -2,8 +2,12 @@ from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-import bcrypt
-import logging
+import bcrypt 
+import logging 
+from models import db, Usuario, Inventario, Venta, VentaItem
+
+User = Usuario  # Alias para compatibilidad
+Producto = Inventario  # Alias para compatibilidad
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'tu_clave_secreta_aqui_cambiala'
@@ -474,6 +478,82 @@ def eliminar_usuario_api(usuario_id):
 def verificar_codigo(codigo):
     existe = Inventario.query.filter_by(codigo=codigo).first() is not None
     return jsonify({'existe': existe})
+
+# ============ RUTAS DE TIENDA ==============
+@app.route('/api/comprar', methods=['POST'])
+@login_required
+def realizar_compra():
+    if current_user.role != 'Cliente':
+        return jsonify({'error': 'Solo clientes pueden comprar'}), 403
+    
+    data = request.json
+    items = data.get('items', [])
+    
+    # Validar stock y calcular total
+    total = 0
+    productos_compra = []
+    
+    for item in items:
+        producto = Producto.query.get(item['id'])
+        if not producto or producto.cantidad < item['cantidad']:
+            return jsonify({'error': f'Stock insuficiente para {producto.nombre if producto else "producto"}'}), 400
+        
+        subtotal = producto.precio * item['cantidad']
+        total += subtotal
+        productos_compra.append({
+            'producto': producto,
+            'cantidad': item['cantidad'],
+            'precio': producto.precio
+        })
+    
+    # Validar saldo del cliente
+    if current_user.saldo < total:
+        return jsonify({'error': 'Saldo insuficiente'}), 400
+    
+    # Crear venta
+    venta = Venta(usuario_id=current_user.id, total=total)
+    db.session.add(venta)
+    db.session.flush()
+    
+    # Actualizar inventario y crear items
+    for pc in productos_compra:
+        producto = pc['producto']
+        producto.cantidad -= pc['cantidad']
+        producto.vendidos += pc['cantidad']
+        
+        item_venta = VentaItem(
+            venta_id=venta.id,
+            producto_id=producto.id,
+            cantidad=pc['cantidad'],
+            precio_unitario=pc['precio']
+        )
+        db.session.add(item_venta)
+    
+    # Descontar saldo
+    current_user.saldo -= total
+    
+    db.session.commit()
+    
+    # Ejecutar ETL después de cada compra
+    from modules.etl_financiero import ETLFinanciero
+    etl = ETLFinanciero()
+    etl.run_etl()
+    
+    return jsonify({
+        'success': True,
+        'total': total,
+        'saldo_restante': current_user.saldo,
+        'venta_id': venta.id
+    })
+
+@app.route('/tienda')
+@login_required
+def tienda():
+    if current_user.role != 'Cliente':
+        return "Acceso solo para clientes", 403
+    
+    productos = Producto.query.filter(Producto.cantidad > 0).all()
+    return render_template('tienda.html', productos=productos)
 
 # ============ INICIAR APLICACIÓN ============
 if __name__ == '__main__':
