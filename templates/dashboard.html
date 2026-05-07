@@ -6,8 +6,8 @@
     <title>Dashboard Administrador</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdn.datatables.net/1.11.5/css/dataTables.bootstrap5.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
+        /* Estilo para que la tabla sea responsive con scroll horizontal */
         .table-responsive-custom {
             overflow-x: auto;
             max-width: 100%;
@@ -15,31 +15,6 @@
         
         .table-custom {
             min-width: 1300px;
-        }
-        
-        .card-stats {
-            transition: transform 0.3s;
-            cursor: pointer;
-        }
-        
-        .card-stats:hover {
-            transform: translateY(-5px);
-        }
-        
-        .tab-pane {
-            background-color: rgb(104, 98, 98);
-            padding: 20px;
-            border-radius: 0 0 10px 10px;
-        }
-        
-        /* Estilo para loading */
-        .loading {
-            display: none;
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            z-index: 9999;
         }
     </style>
 </head>
@@ -61,9 +36,6 @@
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="inventarios-tab" data-bs-toggle="tab" data-bs-target="#inventarios" type="button" role="tab">📦 Inventarios</button>
-            </li>
-            <li class="nav-item" role="presentation">
-                <button class="nav-link" id="ventas-tab" data-bs-toggle="tab" data-bs-target="#ventas" type="button" role="tab">💰 Ventas y Finanzas</button>
             </li>
         </ul>
 
@@ -88,7 +60,6 @@
                                         <th>Celular</th>
                                         <th>Email</th>
                                         <th>Admin</th>
-                                        <th>Saldo</th>
                                         <th>Acciones</th>
                                     </tr>
                                 </thead>
@@ -104,11 +75,8 @@
                                             {% if usuario.es_admin %}
                                                 <span class="badge bg-danger">Admin</span>
                                             {% else %}
-                                                <span class="badge bg-secondary">Cliente</span>
+                                                <span class="badge bg-secondary">Usuario</span>
                                             {% endif %}
-                                        </td>
-                                        <td>
-                                            ${{ "{:,.2f}".format(usuario.saldo) if usuario.saldo else '0.00' }}
                                         </td>
                                         <td>
                                             <button class="btn btn-warning btn-sm" onclick="editarUsuario({{ usuario.id }})">Editar</button>
@@ -123,7 +91,7 @@
                 </div>
             </div>
 
-            <!-- SECCIÓN DE INVENTARIOS -->
+            <!-- SECCIÓN DE INVENTARIOS - CON TODAS LAS COLUMNAS -->
             <div class="tab-pane fade" id="inventarios" role="tabpanel">
                 <div class="card" style="background-color: rgb(104, 98, 98);">
                     <div class="card-header text-white d-flex justify-content-between align-items-center" style="background-color: orange;">
@@ -143,7 +111,6 @@
                                         <th>Descripción</th>
                                         <th>Cantidad</th>
                                         <th>Precio</th>
-                                        <th>Vendidos</th>
                                         <th>Categoría</th>
                                         <th>Ubicación</th>
                                         <th>Proveedor</th>
@@ -168,7 +135,6 @@
                                             {% endif %}
                                         </td>
                                         <td>${{ "{:,.2f}".format(item.precio) }}</td>
-                                        <td>{{ item.vendidos if item.vendidos else 0 }}</td>
                                         <td>{{ item.categoria or 'N/A' }}</td>
                                         <td>{{ item.ubicacion or 'N/A' }}</td>
                                         <td>{{ item.proveedor or 'N/A' }}</td>
@@ -183,123 +149,6 @@
                                             <button class="btn btn-warning btn-sm" onclick="editarInventario({{ item.id }})">Editar</button>
                                             <button class="btn btn-danger btn-sm" onclick="eliminarInventario({{ item.id }})">Eliminar</button>
                                         </td>
-                                    </tr>
-                                    {% endfor %}
-                                </tbody>
-                            </table>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- SECCIÓN DE VENTAS Y FINANZAS -->
-            <div class="tab-pane fade" id="ventas" role="tabpanel">
-                <div class="row mb-4">
-                    <div class="col-md-4 mb-3">
-                        <div class="card card-stats text-white bg-primary">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">💰 Total Ventas</h5>
-                            </div>
-                            <div class="card-body">
-                                <h2 class="card-title">${{ "{:,.2f}".format(total_ventas) if total_ventas else '0.00' }}</h2>
-                                <small>Ingresos totales generados</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4 mb-3">
-                        <div class="card card-stats text-white bg-success">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">📦 Productos Vendidos</h5>
-                            </div>
-                            <div class="card-body">
-                                <h2 class="card-title">{{ total_productos_vendidos if total_productos_vendidos else 0 }}</h2>
-                                <small>Unidades vendidas en total</small>
-                            </div>
-                        </div>
-                    </div>
-                    
-                    <div class="col-md-4 mb-3">
-                        <div class="card card-stats text-white bg-warning">
-                            <div class="card-header">
-                                <h5 class="card-title mb-0">🏆 Producto Más Vendido</h5>
-                            </div>
-                            <div class="card-body">
-                                <h5 class="card-title">{{ producto_mas_vendido.producto if producto_mas_vendido else 'N/A' }}</h5>
-                                <p class="mb-0">{{ producto_mas_vendido.vendidos if producto_mas_vendido else 0 }} unidades vendidas</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-4">
-                    <div class="card-header text-white" style="background-color: orange;">
-                        <h5 class="mb-0">📊 Reporte Financiero ETL</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <div class="col-md-4 mb-3">
-                                <div class="border rounded p-3 text-center bg-light">
-                                    <h6>Total Ingresos</h6>
-                                    <h4 class="text-success">${{ "{:,.2f}".format(metricas_etl.total_ingresos) if metricas_etl else '0.00' }}</h4>
-                                    <small>Ingresos totales procesados</small>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="border rounded p-3 text-center bg-light">
-                                    <h6>N° Transacciones</h6>
-                                    <h4 class="text-primary">{{ metricas_etl.num_transacciones if metricas_etl else 0 }}</h4>
-                                    <small>Total de ventas realizadas</small>
-                                </div>
-                            </div>
-                            <div class="col-md-4 mb-3">
-                                <div class="border rounded p-3 text-center bg-light">
-                                    <h6>Ticket Promedio</h6>
-                                    <h4 class="text-info">${{ "{:,.2f}".format(metricas_etl.ticket_promedio) if metricas_etl else '0.00' }}</h4>
-                                    <small>Valor promedio por venta</small>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card mb-4">
-                    <div class="card-header text-white" style="background-color: orange;">
-                        <h5 class="mb-0">📈 Ventas por Día (Últimos 7 días)</h5>
-                    </div>
-                    <div class="card-body">
-                        <canvas id="ventasChart" height="100"></canvas>
-                    </div>
-                </div>
-
-                <div class="card">
-                    <div class="card-header text-white" style="background-color: orange;">
-                        <h5 class="mb-0">🕒 Últimas Ventas Realizadas</h5>
-                    </div>
-                    <div class="card-body">
-                        <div class="table-responsive">
-                            <table id="ventasTable" class="table table-striped">
-                                <thead>
-                                    <tr>
-                                        <th>ID Venta</th>
-                                        <th>Cliente</th>
-                                        <th>Total</th>
-                                        <th>Productos</th>
-                                        <th>Fecha</th>
-                                    </tr>
-                                </thead>
-                                <tbody>
-                                    {% for venta in ultimas_ventas %}
-                                    <tr>
-                                        <td>{{ venta.id }}</td>
-                                        <td>{{ venta.cliente_nombre }}</td>
-                                        <td>${{ "{:,.2f}".format(venta.total) }}</td>
-                                        <td>{{ venta.cantidad_productos }} unidades</td>
-                                        <td>{{ venta.fecha.strftime('%d/%m/%Y %H:%M') }}</td>
-                                    </tr>
-                                    {% else %}
-                                    <tr>
-                                        <td colspan="5" class="text-center">No hay ventas registradas aún</td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -341,10 +190,6 @@
                             <label>Contraseña</label>
                             <input type="password" class="form-control" id="nuevo_password" required>
                         </div>
-                        <div class="mb-3">
-                            <label>Saldo Inicial</label>
-                            <input type="number" step="0.01" class="form-control" id="nuevo_saldo" value="1000.00">
-                        </div>
                         <div class="mb-3 form-check">
                             <input type="checkbox" class="form-check-input" id="nuevo_es_admin">
                             <label class="form-check-label">Es Administrador</label>
@@ -359,7 +204,7 @@
         </div>
     </div>
 
-    <!-- Modal Crear Inventario -->
+    <!-- Modal Crear Inventario - COMPLETO (con todos los campos) -->
     <div class="modal fade" id="crearInventarioModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="background-color:orange;">
@@ -427,13 +272,13 @@
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn" style="background-color: rgb(0, 195, 216);" data-bs-dismiss="modal">Cancelar</button>
-                    <button type="button" class="btn" style="background-color: rgb(0, 195, 216);" id="btnAgregarProducto">Agregar Producto</button>
+                    <button type="button" class="btn" style="background-color: rgb(0, 195, 216);" onclick="crearInventario()">Agregar Producto</button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Editar Inventario -->
+    <!-- Modal Editar Inventario - COMPLETO (con todos los campos) -->
     <div class="modal fade" id="editarInventarioModal" tabindex="-1">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="background-color:orange;">
@@ -514,7 +359,8 @@
     <script src="https://cdn.datatables.net/1.11.5/js/dataTables.bootstrap5.min.js"></script>
     
     <script>
-        let usuariosTable, inventariosTable, ventasTable, ventasChart;
+        let usuariosTable;
+        let inventariosTable;
 
         $(document).ready(function() {
             usuariosTable = $('#usuariosTable').DataTable({
@@ -524,79 +370,9 @@
             inventariosTable = $('#inventariosTable').DataTable({
                 language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json' },
                 order: [[4, 'desc']],
-                scrollX: true,
+                scrollX: true,  // Permite scroll horizontal
                 autoWidth: false
             });
-            
-            if ($('#ventasTable').length) {
-                ventasTable = $('#ventasTable').DataTable({
-                    language: { url: '//cdn.datatables.net/plug-ins/1.11.5/i18n/es-ES.json' },
-                    order: [[4, 'desc']]
-                });
-            }
-            
-            // Asignar evento al botón de agregar producto
-            $('#btnAgregarProducto').off('click').on('click', function() {
-                crearInventario();
-            });
-        });
-        
-        function inicializarGrafico() {
-            const ctx = document.getElementById('ventasChart');
-            if (ctx && typeof ventasPorDia !== 'undefined' && ventasPorDia && ventasPorDia.length > 0) {
-                if (ventasChart) {
-                    ventasChart.destroy();
-                }
-                ventasChart = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: ventasPorDia.map(v => v.fecha),
-                        datasets: [{
-                            label: 'Ventas ($)',
-                            data: ventasPorDia.map(v => v.total),
-                            borderColor: 'rgb(255, 165, 0)',
-                            backgroundColor: 'rgba(255, 165, 0, 0.1)',
-                            borderWidth: 3,
-                            tension: 0.1,
-                            fill: true,
-                            pointBackgroundColor: 'rgb(255, 165, 0)',
-                            pointBorderColor: '#fff',
-                            pointBorderWidth: 2,
-                            pointRadius: 5,
-                            pointHoverRadius: 7
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        maintainAspectRatio: true,
-                        plugins: {
-                            legend: {
-                                position: 'top',
-                                labels: { color: '#333', font: { size: 12, weight: 'bold' } }
-                            },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        return `Ventas: $${context.parsed.y.toFixed(2)}`;
-                                    }
-                                }
-                            }
-                        },
-                        scales: {
-                            y: {
-                                beginAtZero: true,
-                                ticks: { callback: function(value) { return '$' + value.toFixed(2); } },
-                                title: { display: true, text: 'Monto ($)' }
-                            },
-                            x: { title: { display: true, text: 'Fecha' } }
-                        }
-                    }
-                });
-            }
-        }
-
-        document.getElementById('ventas-tab').addEventListener('shown.bs.tab', function() {
-            setTimeout(inicializarGrafico, 100);
         });
         
         // CRUD Usuarios
@@ -607,7 +383,6 @@
                 celular: $('#nuevo_celular').val(),
                 email: $('#nuevo_email').val(),
                 password: $('#nuevo_password').val(),
-                saldo: parseFloat($('#nuevo_saldo').val()) || 1000.00,
                 es_admin: $('#nuevo_es_admin').is(':checked')
             };
             
@@ -661,144 +436,76 @@
             }
         }
         
-        // CRUD Inventarios - VERSIÓN CORREGIDA
-        function crearInventario() {
-            const codigo = $('#nuevo_codigo').val().trim();
-            const producto = $('#nuevo_producto').val().trim();
-            const cantidad = $('#nuevo_cantidad').val();
-            const precio = $('#nuevo_precio').val();
-            
-            // Validaciones
-            if (!codigo) {
-                alert('❌ El código del producto es requerido');
-                return;
-            }
-            if (!producto) {
-                alert('❌ El nombre del producto es requerido');
-                return;
-            }
-            if (!cantidad || cantidad < 0) {
-                alert('❌ Ingrese una cantidad válida');
-                return;
-            }
-            if (!precio || precio < 0) {
-                alert('❌ Ingrese un precio válido');
-                return;
-            }
-            
-            // Preparar datos (sin incluir 'vendidos' - la BD lo maneja con DEFAULT 0)
-            const data = {
-                codigo: codigo,
-                producto: producto,
-                descripcion: $('#nuevo_descripcion').val().trim() || '',
-                cantidad: parseInt(cantidad),
-                precio: parseFloat(precio),
-                categoria: $('#nuevo_categoria').val() || '',
-                ubicacion: $('#nuevo_ubicacion').val().trim() || '',
-                stock_minimo: parseInt($('#nuevo_stock_minimo').val()) || 5,
-                proveedor: $('#nuevo_proveedor').val().trim() || ''
-            };
-            
-            console.log('📤 Enviando producto:', data);
-            
-            // Deshabilitar botón para evitar doble envío
-            const btn = $('#btnAgregarProducto');
-            const textoOriginal = btn.html();
-            btn.prop('disabled', true).html('⏳ Agregando...');
-            
-            fetch('/api/inventarios', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(response => {
-                if (!response.ok) {
-                    return response.json().then(err => { throw err });
-                }
-                return response.json();
-            })
-            .then(data => {
-                if (data.error) {
-                    alert('❌ Error: ' + data.error);
-                } else {
-                    if (data.existente) {
-                        alert(`✅ PRODUCTO ACTUALIZADO\n\n📦 Producto: ${producto}\n🔢 Código: ${codigo}\n\n📊 Resumen:\n• Cantidad anterior: ${data.cantidad_anterior}\n• Cantidad agregada: +${data.cantidad_agregada}\n• Stock total: ${data.nueva_cantidad}`);
-                    } else {
-                        alert(`✅ PRODUCTO NUEVO AGREGADO\n\n📦 Producto: ${producto}\n🔢 Código: ${codigo}\n💰 Precio: $${precio}\n📊 Stock inicial: ${cantidad}`);
-                    }
-                    $('#crearInventarioForm')[0].reset();
-                    const modal = bootstrap.Modal.getInstance(document.getElementById('crearInventarioModal'));
-                    if (modal) {
-                        modal.hide();
-                    }
-                    location.reload();
-                }
-            })
-            .catch(error => {
-                console.error('Error detallado:', error);
-                let mensajeError = 'Error al agregar producto: ';
-                if (error.error) {
-                    mensajeError += error.error;
-                } else if (error.message) {
-                    mensajeError += error.message;
-                } else {
-                    mensajeError += 'Error desconocido. Revisa la consola.';
-                }
-                alert('❌ ' + mensajeError);
-            })
-            .finally(() => {
-                btn.prop('disabled', false).html(textoOriginal);
-            });
+        // CRUD Inventarios - COMPLETO (con todos los campos)
+function crearInventario() {
+    const codigo = $('#nuevo_codigo').val().trim();
+    const producto = $('#nuevo_producto').val().trim();
+    const cantidad = $('#nuevo_cantidad').val();
+    const precio = $('#nuevo_precio').val();
+    
+    if (!codigo) {
+        alert('❌ El código del producto es requerido');
+        return;
+    }
+    if (!producto) {
+        alert('❌ El nombre del producto es requerido');
+        return;
+    }
+    if (!cantidad || cantidad < 0) {
+        alert('❌ Ingrese una cantidad válida');
+        return;
+    }
+    if (!precio || precio < 0) {
+        alert('❌ Ingrese un precio válido');
+        return;
+    }
+    
+    const data = {
+        codigo: codigo,
+        producto: producto,
+        descripcion: $('#nuevo_descripcion').val().trim() || '',
+        cantidad: parseInt(cantidad),
+        precio: parseFloat(precio),
+        categoria: $('#nuevo_categoria').val() || '',
+        ubicacion: $('#nuevo_ubicacion').val().trim() || '',
+        stock_minimo: parseInt($('#nuevo_stock_minimo').val()) || 5,
+        proveedor: $('#nuevo_proveedor').val().trim() || ''
+    };
+    
+    console.log('📤 Enviando producto:', data);
+    
+    fetch('/api/inventarios', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    })
+    .then(response => {
+        if (!response.ok) {
+            return response.json().then(err => { throw err });
         }
-        
-        function editarInventario(id) {
-            fetch(`/api/inventarios/${id}`)
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert('Error: ' + data.error);
-                    return;
-                }
-                $('#edit_id').val(data.id);
-                $('#edit_codigo').val(data.codigo);
-                $('#edit_producto').val(data.producto);
-                $('#edit_descripcion').val(data.descripcion || '');
-                $('#edit_cantidad').val(data.cantidad);
-                $('#edit_precio').val(data.precio);
-                $('#edit_categoria').val(data.categoria || '');
-                $('#edit_ubicacion').val(data.ubicacion || '');
-                $('#edit_proveedor').val(data.proveedor || '');
-                $('#edit_stock_minimo').val(data.stock_minimo || 5);
-                
-                new bootstrap.Modal(document.getElementById('editarInventarioModal')).show();
-            })
-            .catch(error => alert('Error: ' + error));
+        return response.json();
+    })
+    .then(data => {
+        if (data.error) {
+            alert('❌ Error: ' + data.error);
+        } else {
+            if (data.existente) {
+                // Producto existente - se sumó cantidad
+                alert(`✅ PRODUCTO ACTUALIZADO\n\n📦 Producto: ${producto}\n🔢 Código: ${codigo}\n\n📊 Resumen:\n• Cantidad anterior: ${data.cantidad_anterior}\n• Cantidad agregada: +${data.cantidad_agregada}\n• Stock total: ${data.nueva_cantidad}`);
+            } else {
+                // Producto nuevo
+                alert(`✅ PRODUCTO NUEVO AGREGADO\n\n📦 Producto: ${producto}\n🔢 Código: ${codigo}\n📊 Stock inicial: ${data.nueva_cantidad}`);
+            }
+            $('#crearInventarioForm')[0].reset();
+            bootstrap.Modal.getInstance(document.getElementById('crearInventarioModal')).hide();
+            location.reload();
         }
-        
-        function actualizarInventario() {
-            const id = $('#edit_id').val();
-            const data = {
-                codigo: $('#edit_codigo').val(),
-                producto: $('#edit_producto').val(),
-                descripcion: $('#edit_descripcion').val(),
-                cantidad: parseInt($('#edit_cantidad').val()),
-                precio: parseFloat($('#edit_precio').val()),
-                categoria: $('#edit_categoria').val(),
-                ubicacion: $('#edit_ubicacion').val(),
-                proveedor: $('#edit_proveedor').val(),
-                stock_minimo: parseInt($('#edit_stock_minimo').val())
-            };
-            
-            fetch(`/api/inventarios/${id}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(data)
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.error) {
-                    alert('❌ Error: ' + data.error);
-                } else {
-                    alert('✅ Producto actualizado exitosamente');
-                    bootstrap.Modal.getInstance(document.getElementById('editarInventarioModal')).hide();
-                   
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('❌ Error al agregar producto: ' + (error.error || error.message || 'Error desconocido'));
+    });
+}
+    </script>
+</body>
+</html>
